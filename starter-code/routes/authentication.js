@@ -62,19 +62,45 @@ router.post('/sign-up', (req, res, next) => {
       subject: 'Test email',
       //text: 'This should be the body of the text email'
       html: `
-        <style>
-          h1 {
-            /* color: green !important; */
-          }
         </style>
-        <h1 style="color: green">This should be the body of the text email</h1>
-        <p><strong>Hello</strong> <em>World!</em></p>
+        <h1 style="color: green">Welcome to our Webpage!</h1>
+        <p><strong>Confirm</strong> your email down here:</p>
+        <a href="http://localhost:3000/confirm/${token}">Confirm email</a>
       `
     }))
     .catch(error => {
       next(error);
     })
 });
+
+router.get('/confirm/:token', (req,res,next) =>{
+  confirmationToken = req.params.token
+  console.log(confirmationToken)
+  router.post('/sign-in', (req, res, next) => {
+    let userId;
+    User.findOne({
+      'confirmationCode':confirmationToken
+    })
+      .then(user => {
+        if (!user) {
+          return Promise.reject(new Error("There's no user with that email."));
+        } else {
+          userId = user._id;
+          req.session.user = userId;
+          res.redirect('/');
+        }
+      })
+      .catch(error => {
+        next(error);
+      });
+  });
+
+
+
+
+  //console.log(req.session)
+  res.render('private')
+})
 
 router.get('/sign-in', (req, res, next) => {
   res.render('sign-in');
