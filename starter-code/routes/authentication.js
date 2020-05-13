@@ -18,6 +18,7 @@ router.get('/', (req, res, next) => {
   res.render('index');
 });
 
+
 router.get('/sign-up', (req, res, next) => {
   res.render('sign-up');
 });
@@ -52,8 +53,11 @@ router.post('/sign-up', (req, res, next) => {
       });
     })
     .then(user => {
+      // console.log(user)
+      // console.log(user._id);
       req.session.user = user._id;
-      res.redirect('/');
+      // console.log(req.session.user)
+      res.redirect('/private');
     })
     .then(
       transporter.sendMail({
@@ -75,32 +79,51 @@ router.post('/sign-up', (req, res, next) => {
 
 router.get('/confirm/:token', (req,res,next) =>{
   confirmationToken = req.params.token
-  console.log(confirmationToken)
-  router.post('/sign-in', (req, res, next) => {
-    let userId;
-    User.findOne({
-      'confirmationCode':confirmationToken
+  // console.log(confirmationToken)
+  User.findOne({
+    'confirmationCode':confirmationToken
+  })
+    .then(user => {
+      // console.log('you are confirmed my friend!')
+      // console.log(user)
+      if (!user) {
+        return Promise.reject(new Error("There's no user with that email."));
+      } else {
+        // req.session.user = user._id
+        res.redirect('/private');
+      }
     })
-      .then(user => {
-        if (!user) {
-          return Promise.reject(new Error("There's no user with that email."));
-        } else {
-          userId = user._id;
-          req.session.user = userId;
-          res.redirect('/');
-        }
-      })
-      .catch(error => {
-        next(error);
-      });
-  });
-
-
-
-
-  //console.log(req.session)
-  res.render('private')
+    .catch(error =>{
+      next(error)
+    })
+    .finally(() =>{
+      console.log(req.session.user);
+      // console.log(req.session)
+    })
 })
+    
+  // router.post('/sign-in', (req, res, next) => {
+    // let userId;
+    // User.findOne({
+    //   'confirmationCode':confirmationToken
+    // })
+    //   .then(user => {
+    //     console.log('you are confirmed my friend!')
+        // if (!user) {
+        //   return Promise.reject(new Error("There's no user with that email."));
+        // } else {
+        //   userId = user._id;
+        //   req.session.user = userId;
+        //   res.redirect('/');
+        // }
+  //     })
+  //     .catch(error => {
+  //       next(error);
+  //     });
+  // });
+  //console.log(req.session)
+  // res.render('private')
+
 
 router.get('/sign-in', (req, res, next) => {
   res.render('sign-in');
@@ -136,10 +159,13 @@ router.post('/sign-out', (req, res, next) => {
   res.redirect('/');
 });
 
+
 const routeGuard = require('./../middleware/route-guard');
 
 router.get('/private', routeGuard, (req, res, next) => {
+  console.log("this is the private route")
   res.render('private');
 });
+
 
 module.exports = router;
